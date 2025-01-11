@@ -1,6 +1,8 @@
-const WhatsAppClient = require('./index.js');
+// Importação das dependências necessárias
+import WhatsAppClient from './index.ts';
 
-async function exemplo() {
+// Função assíncrona principal
+async function exemplo(): Promise<void> {
     const client = new WhatsAppClient();
     await client.initialize();
     
@@ -12,4 +14,5 @@ async function exemplo() {
     }, 10000);
 }
 
+// Chama a função principal
 exemplo();

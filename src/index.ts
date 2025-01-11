@@ -1,13 +1,13 @@
 // Importação das dependências necessárias do pacote baileys
-const {
-    default: makeWASocket,        // Função principal para criar a conexão com WhatsApp
-    useMultiFileAuthState,        // Gerencia autenticação usando múltiplos arquivos
-    DisconnectReason,            // Enum com razões de desconexão
-    Browsers                     // Simula diferentes navegadores
-} = require('@whiskeysockets/baileys');
-const qrcode = require('qrcode-terminal');  // Biblioteca para gerar QR Code no terminal
-const fs = require('fs');                   // Módulo para manipulação de arquivos
-const path = require('path');               // Módulo para manipulação de caminhos de arquivos
+import {
+    default as makeWASocket,        // Função principal para criar a conexão com WhatsApp
+    useMultiFileAuthState,          // Gerencia autenticação usando múltiplos arquivos
+    DisconnectReason,               // Enum com razões de desconexão
+    Browsers                        // Simula diferentes navegadores
+} from '@whiskeysockets/baileys';
+import qrcode from 'qrcode-terminal';  // Biblioteca para gerar QR Code no terminal
+import fs from 'fs';                   // Módulo para manipulação de arquivos
+import path from 'path';               // Módulo para manipulação de caminhos de arquivos
 
 // Define o diretório onde serão salvos os dados de autenticação
 const AUTH_DIR = path.join(__dirname, 'auth_data');
@@ -18,15 +18,20 @@ if (!fs.existsSync(AUTH_DIR)) {
 
 // Classe principal que gerencia a conexão com WhatsApp
 class WhatsAppClient {
+    private sock: any;                  // Armazena a conexão
+    public isConnected: boolean;       // Status da conexão
+    private reconnectAttempts: number;  // Contador de tentativas de reconexão
+    private maxReconnectAttempts: number; // Máximo de tentativas permitidas
+
     constructor() {
-        this.sock = null;                    // Armazena a conexão
-        this.isConnected = false;            // Status da conexão
-        this.reconnectAttempts = 0;          // Contador de tentativas de reconexão
-        this.maxReconnectAttempts = 5;       // Máximo de tentativas permitidas
+        this.sock = null;
+        this.isConnected = false;
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 5;
     }
 
     // Método para inicializar a conexão
-    async initialize() {
+    async initialize(): Promise<any> {
         try {
             // Carrega ou cria novo estado de autenticação
             const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
@@ -52,12 +57,12 @@ class WhatsAppClient {
     }
 
     // Configura os listeners para diferentes eventos
-    setupEventListeners(saveCreds) {
+    private setupEventListeners(saveCreds: Function): void {
         // Salva credenciais quando são atualizadas
         this.sock.ev.on('creds.update', saveCreds);
 
         // Gera e mostra QR Code quando necessário
-        this.sock.ev.on('qr', (qr) => {
+        this.sock.ev.on('qr', (qr: string) => {
             qrcode.generate(qr, { small: true });
             console.log('\nPor favor, escaneie o QR Code acima para conectar ao WhatsApp\n');
         });
@@ -70,7 +75,7 @@ class WhatsAppClient {
     }
 
     // Gerencia atualizações de estado da conexão
-    async handleConnectionUpdate(update) {
+    private async handleConnectionUpdate(update: any): Promise<void> {
         const { connection, lastDisconnect } = update;
 
         if (connection === 'open') {
@@ -101,7 +106,7 @@ class WhatsAppClient {
     }
 
     // Processa novas mensagens recebidas
-    handleNewMessage(messageUpdate) {
+    private handleNewMessage(messageUpdate: any): void {
         const message = messageUpdate.messages[0];
         // Ignora mensagens enviadas pelo próprio bot
         if (!message?.key?.fromMe) {
@@ -116,7 +121,7 @@ class WhatsAppClient {
     }
 
     // Método para enviar mensagens
-    async sendMessage(to, content) {
+    async sendMessage(to: string, content: string): Promise<any> {
         if (!this.isConnected) {
             throw new Error('Cliente não está conectado ao WhatsApp');
         }
@@ -139,7 +144,7 @@ class WhatsAppClient {
     }
 
     // Formata números de telefone para o formato do WhatsApp
-    formatPhoneNumber(number) {
+    private formatPhoneNumber(number: string): string {
         // Remove caracteres não numéricos (parênteses, traços, etc)
         const cleaned = number.replace(/\D/g, '');
         // Adiciona sufixo @s.whatsapp.net se não existir
@@ -148,7 +153,7 @@ class WhatsAppClient {
 }
 
 // Função principal de exemplo
-async function main() {
+async function main(): Promise<void> {
     const client = new WhatsAppClient();
     
     try {
@@ -177,4 +182,4 @@ if (require.main === module) {
 }
 
 // Exporta a classe para ser usada em outros arquivos
-module.exports = WhatsAppClient;
+export default WhatsAppClient;
